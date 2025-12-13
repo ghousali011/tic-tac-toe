@@ -3,26 +3,39 @@
 #include <conio.h>
 #include <limits>
 #include <climits>
+#include <fstream>
 using namespace std;
 
+// ======================= initial headers ===================
+void menu();
+void header();
+void printLoadedBoard();
+
+// ==================== saving inputs ===================
 void saveTemp(int temp, bool player1);
 string savingPermanent(string temp, int width, int height, bool player1);
+
+// =================== printing player input ================
 void printPlayerInput(int width, int height, bool player1);
+// ================= checking player win ================
 int PlayerWin();
+// =================== checking if all the inputs are full and game is drawn =================
 bool isArrayFull();
 
-void header();
+// ================= file handlilng =====================
+void saveInFile(bool player1);
+bool loadFromFile(bool &player1);
+void clearRecords();
+
+// ============== default functions ======================
 int takingIntegerInput(int min, int max);
 int integerVerification(string input);
 string emptyverification(int w, int h);
-bool checkPipe(const string &input);
 string trimSpaces(string str);
-void addAccountInformation(string temp, string filename);
 void setColor(string hexcolor);
 void gotoxy(int x, int y);
 void getconsolemeasures(int &width, int &height);
 void getCursorPosition();
-void clear_cin();
 void hideCursor();
 void showCursor();
 void setCursorSize(int size);
@@ -31,23 +44,24 @@ void setCursorSize(int size);
 // --- default ---
 int width, height, currentWidth, currentHeight;
 string optioncolor = "4", headingcolor = "3", headingBarColor = "B5";
+// ----- initializing array as empty ------------
 string gameRecords[3][3] = {""};
+// ----------- starting game from player 1 --------------
 bool player1 = true;
 int main()
 {
-    int temp, x;
+    int temp, playerwon;
+    // ------ initial settings ------
     getconsolemeasures(width, height);
     hideCursor();
+    menu();
+    // starting game for infinity times
     while (true)
     {
         header();
         setColor(optioncolor);
         gotoxy(width - 12, 2);
         cout << "1 | 2 | 3";
-        for (int i = 0; i < 3; i++)
-        {
-            gameRecords[i][0] = gameRecords[i][1] = gameRecords[i][2] = "";
-        }
         gotoxy(width - 12, 3);
         cout << "---------";
         gotoxy(width - 12, 4);
@@ -81,6 +95,9 @@ int main()
         cout << "     |      |     ";
         gotoxy(width / 2 - 12, height / 2 + 6);
         cout << "     |      |     ";
+        setColor("08");
+        loadFromFile(player1);
+        printLoadedBoard();
         for (int i = 0; true; i++)
         {
             setColor("05");
@@ -98,12 +115,12 @@ int main()
                 saveTemp(temp, player1);
             else
                 saveTemp(temp, player1);
-            x = PlayerWin();
-            if (x == 1 || x == 2)
+            playerwon = PlayerWin();
+            if (playerwon == 1 || playerwon == 2)
             {
                 header();
                 gotoxy(width / 2 - 10, height / 2 - 3);
-                cout << "Player " << x << " is the winner.";
+                cout << "Player " << playerwon << " is the winner.";
                 gotoxy(width / 2 - 10, height - 2);
                 cout << "Press any key to continue...";
                 _getch();
@@ -120,50 +137,7 @@ int main()
                 break;
             }
         }
-    }
-    return 0;
-}
-// ------------- checking player win --------------------
-int PlayerWin()
-{
-    int counthorizontal1 = 0, countvertical1 = 0, counthorizontal2 = 0, countvertical2 = 0, countdiagonal1 = 0, countdiagonal2 = 0;
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            if (gameRecords[i][j] == "x")
-                counthorizontal1++;
-
-            if (gameRecords[j][i] == "x")
-                countvertical1++;
-
-            if (gameRecords[i][j] == "o")
-                counthorizontal2++;
-
-            if (gameRecords[j][i] == "o")
-                countvertical2++;
-
-            if (i == j)
-            {
-                if (gameRecords[i][j] == "x")
-                    countdiagonal1++;
-                if (gameRecords[i][j] == "o")
-                    countdiagonal2++;
-            }
-        }
-        if (counthorizontal1 == 3 || countvertical1 == 3 || countdiagonal1 == 3)
-            return 1;
-        else if (counthorizontal2 == 3 || countvertical2 == 3 || countdiagonal2 == 3)
-            return 2;
-        else
-            counthorizontal1 = countvertical1 = counthorizontal2 = countvertical2 = 0;
-    }
-    if (gameRecords[0][2] == gameRecords[1][1] && gameRecords[1][1] == gameRecords[2][0])
-    {
-        if (gameRecords[0][2] == "x")
-            return 1;
-        else if (gameRecords[0][2] == "o")
-            return 2;
+        clearRecords(); // game ends and records from file is reset
     }
     return 0;
 }
@@ -192,6 +166,119 @@ void header()
         cout << "|";
     }
 }
+//------------- menu ----------------
+void menu()
+{
+    system("cls");
+    int n;
+    setColor(headingcolor);
+    gotoxy(width / 2 - 12, height / 2);
+    cout << "Welcome to Tic Tac Toe";
+    Sleep(1000);
+    gotoxy(width / 2 - 8, height / 2);
+    cout << "                       ";
+    gotoxy(width / 2 - 12, height / 2 - 1);
+    cout << "Enter 0 to continue previous game";
+    gotoxy(width / 2 - 12, height / 2);
+    cout << "Enter 1 to start new game...";
+    n = takingIntegerInput(0, 1);
+    if (n != 0)
+        clearRecords();
+}
+// ---------------------- load from previous game ---------------------
+bool loadFromFile(bool &player1)
+{
+    ifstream file("records.txt");
+
+    if (!file)
+        return false; // no previous game
+
+    string temp;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            file >> temp;
+            if (temp == "-")
+                gameRecords[i][j] = "";
+            else
+                gameRecords[i][j] = temp;
+        }
+    }
+
+    file >> player1; // restore turn
+    file.close();
+
+    return true;
+}
+// ------------------- printing previous data ------------------
+void printLoadedBoard()
+{
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (!gameRecords[i][j].empty())
+            {
+                bool isPlayer1 = (gameRecords[i][j] == "x");
+
+                int xPos, yPos;
+
+                // mapping board positions
+                if (i == 0 && j == 0)
+                {
+                    xPos = width / 2 - 12;
+                    yPos = height / 2 - 5;
+                }
+                else if (i == 0 && j == 1)
+                {
+                    xPos = width / 2 - 4;
+                    yPos = height / 2 - 5;
+                }
+                else if (i == 0 && j == 2)
+                {
+                    xPos = width / 2 + 4;
+                    yPos = height / 2 - 5;
+                }
+
+                else if (i == 1 && j == 0)
+                {
+                    xPos = width / 2 - 12;
+                    yPos = height / 2;
+                }
+                else if (i == 1 && j == 1)
+                {
+                    xPos = width / 2 - 4;
+                    yPos = height / 2;
+                }
+                else if (i == 1 && j == 2)
+                {
+                    xPos = width / 2 + 4;
+                    yPos = height / 2;
+                }
+
+                else if (i == 2 && j == 0)
+                {
+                    xPos = width / 2 - 12;
+                    yPos = height / 2 + 4;
+                }
+                else if (i == 2 && j == 1)
+                {
+                    xPos = width / 2 - 4;
+                    yPos = height / 2 + 4;
+                }
+                else if (i == 2 && j == 2)
+                {
+                    xPos = width / 2 + 4;
+                    yPos = height / 2 + 4;
+                }
+
+                printPlayerInput(xPos, yPos, isPlayer1);
+            }
+        }
+    }
+}
+
 // ----------------- saving input in array --------------
 string savingPermanent(string temp, int width, int height, bool player1)
 {
@@ -257,7 +344,39 @@ void saveTemp(int temp, bool player1)
     {
         gameRecords[2][2] = savingPermanent(gameRecords[2][2], width / 2 + 4, height / 2 + 4, player1);
     }
+    saveInFile(player1);
 }
+// ---------------- saving records in file permanently -----------------------
+void saveInFile(bool player1)
+{
+    ofstream file("records.txt");
+
+    if (!file)
+        return; // file error safety
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (gameRecords[i][j].empty())
+                file << "- ";
+            else
+                file << gameRecords[i][j] << " ";
+        }
+        file << endl;
+    }
+
+    file << player1; // save whose turn
+
+    file.close();
+}
+// ------------- clear previous records in case of new game -----------------
+void clearRecords()
+{
+    ofstream file("records.txt");
+    file.close();
+}
+
 // --------------------------- printing player input ---------------------
 void printPlayerInput(int width, int height, bool player1)
 {
@@ -276,6 +395,52 @@ void printPlayerInput(int width, int height, bool player1)
         cout << "\\/";
     }
 }
+
+// ------------- checking player win --------------------
+int PlayerWin()
+{
+    int counthorizontal1 = 0, countvertical1 = 0, counthorizontal2 = 0, countvertical2 = 0, countdiagonal1 = 0, countdiagonal2 = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (gameRecords[i][j] == "x")
+                counthorizontal1++;
+
+            if (gameRecords[j][i] == "x")
+                countvertical1++;
+
+            if (gameRecords[i][j] == "o")
+                counthorizontal2++;
+
+            if (gameRecords[j][i] == "o")
+                countvertical2++;
+
+            if (i == j)
+            {
+                if (gameRecords[i][j] == "x")
+                    countdiagonal1++;
+                if (gameRecords[i][j] == "o")
+                    countdiagonal2++;
+            }
+        }
+        if (counthorizontal1 == 3 || countvertical1 == 3 || countdiagonal1 == 3)
+            return 1;
+        else if (counthorizontal2 == 3 || countvertical2 == 3 || countdiagonal2 == 3)
+            return 2;
+        else
+            counthorizontal1 = countvertical1 = counthorizontal2 = countvertical2 = 0;
+    }
+    if (gameRecords[0][2] == gameRecords[1][1] && gameRecords[1][1] == gameRecords[2][0])
+    {
+        if (gameRecords[0][2] == "x")
+            return 1;
+        else if (gameRecords[0][2] == "o")
+            return 2;
+    }
+    return 0;
+}
+
 // ================================================= Default functions =========================================================================
 // -------------------- integer input verification ----------------------
 int takingIntegerInput(int min, int max)
