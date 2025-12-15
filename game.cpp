@@ -23,7 +23,7 @@ int PlayerWin();
 bool isArrayFull();
 
 // ================= file handlilng =====================
-void saveInFile(bool player1);
+void saveInFile();
 bool loadFromFile(bool &player1);
 void clearRecords();
 
@@ -133,6 +133,7 @@ int main()
                 cout << "Match draw.";
                 gotoxy(width / 2 - 10, height - 2);
                 cout << "Press any key to continue...";
+                player1 = true;
                 _getch();
                 break;
             }
@@ -205,8 +206,15 @@ bool loadFromFile(bool &player1)
                 gameRecords[i][j] = temp;
         }
     }
+    if (!(file >> player1))
+    {
+        player1 = true; // default value
+    }
+    else
+    {
+        file >> player1;
+    }
 
-    file >> player1; // restore turn
     file.close();
 
     return true;
@@ -344,10 +352,10 @@ void saveTemp(int temp, bool player1)
     {
         gameRecords[2][2] = savingPermanent(gameRecords[2][2], width / 2 + 4, height / 2 + 4, player1);
     }
-    saveInFile(player1);
+    saveInFile();
 }
 // ---------------- saving records in file permanently -----------------------
-void saveInFile(bool player1)
+void saveInFile()
 {
     ofstream file("records.txt");
 
@@ -365,9 +373,7 @@ void saveInFile(bool player1)
         }
         file << endl;
     }
-
-    file << player1; // save whose turn
-
+    file << player1;
     file.close();
 }
 // ------------- clear previous records in case of new game -----------------
