@@ -54,6 +54,7 @@ int main()
     // ------ initial settings ------
     getconsolemeasures(width, height);
     hideCursor();
+    header();
     menu();
     // starting game for infinity times
     while (true)
@@ -95,12 +96,11 @@ int main()
         cout << "     |      |     ";
         gotoxy(width / 2 - 12, height / 2 + 6);
         cout << "     |      |     ";
-        setColor("08");
         loadFromFile(player1);
         printLoadedBoard();
         for (int i = 0; true; i++)
         {
-            setColor("05");
+            setColor("0D");
             gotoxy(2, height / 2 + 10);
             if (player1)
                 cout << "Player 1st turn: ";
@@ -110,7 +110,6 @@ int main()
             temp = takingIntegerInput(1, 9);
             gotoxy(currentWidth, currentHeight);
             cout << "  ";
-            setColor("08");
             if (player1)
                 saveTemp(temp, player1);
             else
@@ -119,7 +118,8 @@ int main()
             if (playerwon == 1 || playerwon == 2)
             {
                 header();
-                gotoxy(width / 2 - 10, height / 2 - 3);
+                setColor("0E");
+                gotoxy(width / 2 - 10, height / 2);
                 cout << "Player " << playerwon << " is the winner.";
                 gotoxy(width / 2 - 10, height - 2);
                 cout << "Press any key to continue...";
@@ -129,7 +129,8 @@ int main()
             else if (isArrayFull())
             {
                 header();
-                gotoxy(width / 2 - 6, height / 2 - 3);
+                setColor("0E");
+                gotoxy(width / 2 - 6, height / 2);
                 cout << "Match draw.";
                 gotoxy(width / 2 - 10, height - 2);
                 cout << "Press any key to continue...";
@@ -170,21 +171,43 @@ void header()
 //------------- menu ----------------
 void menu()
 {
-    system("cls");
     int n;
-    setColor(headingcolor);
-    gotoxy(width / 2 - 12, height / 2);
-    cout << "Welcome to Tic Tac Toe";
-    Sleep(1000);
-    gotoxy(width / 2 - 8, height / 2);
-    cout << "                       ";
-    gotoxy(width / 2 - 12, height / 2 - 1);
+    setColor("06");
+    for (int i = 0; i < 6; i++)
+    {
+        gotoxy(width / 2 - 12, height / 2);
+        cout << "Welcome to Tic Tac Toe";
+        Sleep(500);
+        gotoxy(width / 2 - 12, height / 2);
+        for (int j = 0; j < 24; j++)
+            cout << " ";
+        Sleep(10);
+    }
+    setColor("0E");
+    gotoxy(width / 2 - 17, height / 2 - 4);
+    cout << "=================================";
+    gotoxy(width / 2 - 2, height / 2 - 3);
+    cout << "Menu";
+    gotoxy(width / 2 - 17, height / 2 - 2);
+    cout << "=================================";
+    setColor("06");
+    gotoxy(width / 2 - 17, height / 2 - 1);
     cout << "Enter 0 to continue previous game";
-    gotoxy(width / 2 - 12, height / 2);
-    cout << "Enter 1 to start new game...";
-    n = takingIntegerInput(0, 1);
-    if (n != 0)
+    gotoxy(width / 2 - 17, height / 2);
+    cout << "Enter 1 to start new game";
+    gotoxy(width / 2 - 17, height / 2 + 1);
+    cout << "Enter 2 to exit";
+    gotoxy(width / 2 - 17, height / 2 + 3);
+    cout << "Your choice...";
+    n = takingIntegerInput(0, 2);
+    if (n == 1)
         clearRecords();
+    else if (n == 2)
+    {
+        system("cls");
+        setColor("07");
+        exit(0);
+    }
 }
 // ---------------------- load from previous game ---------------------
 bool loadFromFile(bool &player1)
@@ -388,6 +411,7 @@ void printPlayerInput(int width, int height, bool player1)
 {
     if (player1)
     {
+        setColor("0F");
         gotoxy(width, height);
         cout << "\\/";
         gotoxy(width, height + 1);
@@ -395,6 +419,7 @@ void printPlayerInput(int width, int height, bool player1)
     }
     else
     {
+        setColor("0C");
         gotoxy(width, height);
         cout << "/\\";
         gotoxy(width, height + 1);
@@ -501,8 +526,12 @@ string emptyverification(int w, int h)
     string temp;
     while (true)
     {
+        setColor("0E");
+        showCursor();
         gotoxy(w, h);
         getline(cin, temp);
+        hideCursor();
+        setColor(optioncolor);
         if (!temp.empty())
         {
             temp = trimSpaces(temp);
